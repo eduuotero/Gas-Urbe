@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0B2545;
+  --color-accent: #E85D26;
+  --color-background: #F8F9FA;
+  --color-surface: #FFFFFF;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.btn-primary {
+  @apply bg-primary text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity;
+}
+
+.btn-accent {
+  @apply bg-accent text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity;
+}
+
+.card {
+  @apply bg-surface rounded-xl shadow-sm border border-gray-100 p-4;
+}

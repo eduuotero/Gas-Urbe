@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "User": {
+      "title": "Usuario",
+      "description": "Perfil de usuario del sistema (técnico, coordinador o administrador)",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string", "description": "Nombre completo" },
+        "email": { "type": "string", "format": "email", "description": "Correo electrónico" },
+        "role": { "type": "string", "enum": ["tecnico", "coordinador", "administrador"], "description": "Rol en el sistema" },
+        "telefono": { "type": "string", "description": "Teléfono de contacto" },
+        "zona_asignada": { "type": "string", "description": "ID de la zona asignada" },
+        "activo": { "type": "boolean", "description": "Estatus de cuenta" },
+        "ubicacion_actual": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "ultimo_ping": { "type": "string", "format": "date-time", "description": "Última actualización de ubicación" }
+      },
+      "required": ["nombre", "email", "role", "activo"]
+    },
+    "Cliente": {
+      "title": "Cliente",
+      "description": "Información del cliente sincronizada con Salesforce",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "direccion": { "type": "string" },
+        "colonia": { "type": "string" },
+        "zona": { "type": "string" },
+        "telefono": { "type": "string" },
+        "id_contrato_salesforce": { "type": "string" }
+      },
+      "required": ["nombre", "direccion", "id_contrato_salesforce"]
+    },
+    "Servicio": {
+      "title": "Servicio",
+      "description": "Registro de un mantenimiento realizado en campo",
+      "type": "object",
+      "properties": {
+        "id_cliente": { "type": "string" },
+        "id_tecnico": { "type": "string" },
+        "fecha": { "type": "string", "format": "date" },
+        "hora_inicio": { "type": "string" },
+        "hora_fin": { "type": "string" },
+        "tipo_servicio": { "type": "string" },
+        "materiales_usados": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nombre": { "type": "string" },
+              "cantidad": { "type": "number" },
+              "serie": { "type": "string" }
+            }
+          }
+        },
+        "estado_instalacion": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "fotos_antes": { "type": "array", "items": { "type": "string" } },
+        "fotos_despues": { "type": "array", "items": { "type": "string" } },
+        "firma_cliente": { "type": "string", "description": "URL de la firma digital" },
+        "tiempo_cierre_reporte": { "type": "number" },
+        "sincronizado_salesforce": { "type": "boolean" },
+        "id_expediente_salesforce": { "type": "string" },
+        "estatus": { "type": "string", "enum": ["pendiente", "en_transito", "en_servicio", "completado", "cancelado"] },
+        "ubicacion_cierre": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        }
+      },
+      "required": ["id_cliente", "id_tecnico", "fecha", "tipo_servicio", "estatus"]
+    },
+    "Material": {
+      "title": "Material",
+      "description": "Catálogo de materiales disponibles para mantenimiento",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "unidad": { "type": "string" },
+        "precio_unitario": { "type": "number" },
+        "activo": { "type": "boolean" }
+      },
+      "required": ["nombre", "unidad", "activo"]
+    },
+    "Zona": {
+      "title": "Zona",
+      "description": "Zonas geográficas de cobertura",
+      "type": "object",
+      "properties": {
+        "nombre": { "type": "string" },
+        "tecnico_asignado_default": { "type": "string" }
+      },
+      "required": ["nombre"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Perfiles de usuario"
+    },
+    "/clientes/{clienteId}": {
+      "schema": "Cliente",
+      "description": "Base de datos de clientes"
+    },
+    "/servicios/{servicioId}": {
+      "schema": "Servicio",
+      "description": "Historial de servicios realizados"
+    },
+    "/materiales/{materialId}": {
+      "schema": "Material",
+      "description": "Catálogo de materiales"
+    },
+    "/zonas/{zonaId}": {
+      "schema": "Zona",
+      "description": "Catálogo de zonas"
+    }
+  }
+}

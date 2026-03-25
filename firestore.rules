@@ -1,0 +1,156 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - nombre: string (required)
+    //   - email: string (required, email format)
+    //   - role: string (required, enum: tecnico, coordinador, administrador)
+    //   - activo: boolean (required)
+    //   - telefono: string (optional)
+    //   - zona_asignada: string (optional)
+    //
+    // Collection: clientes
+    // Document ID: {clienteId}
+    // Fields:
+    //   - nombre: string (required)
+    //   - direccion: string (required)
+    //   - id_contrato_salesforce: string (required)
+    //
+    // Collection: servicios
+    // Document ID: {servicioId}
+    // Fields:
+    //   - id_cliente: string (required)
+    //   - id_tecnico: string (required)
+    //   - fecha: string (required, date format)
+    //   - tipo_servicio: string (required)
+    //   - estatus: string (required, enum: pendiente, en_transito, en_servicio, completado, cancelado)
+    //   - materiales_usados: list (optional)
+    //   - estado_instalacion: string (optional)
+    //   - observaciones: string (optional)
+    //   - fotos_antes: list (optional)
+    //   - fotos_despues: list (optional)
+    //   - firma_cliente: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'administrador' ||
+          (request.auth.token.email == "a01787038@tec.mx" && request.auth.token.email_verified == true));
+    }
+
+    function isCoordinador() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coordinador';
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['nombre', 'email', 'role', 'activo']) &&
+             data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.role in ['tecnico', 'coordinador', 'administrador'] &&
+             data.activo is bool;
+    }
+
+    function isValidServicio(data) {
+      return hasRequiredFields(['id_cliente', 'id_tecnico', 'fecha', 'tipo_servicio', 'estatus']) &&
+             data.id_cliente is string &&
+             data.id_tecnico is string &&
+             data.fecha is string &&
+             data.tipo_servicio is string &&
+             data.estatus in ['pendiente', 'en_transito', 'en_servicio', 'completado', 'cancelado'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Users can only read their own profile (PII protection)
+      // Admins and Coordinators can read all profiles to manage assignments
+      allow read: if isOwner(userId) || isAdmin() || isCoordinador();
+      
+      // Only admins can create or update roles
+      // Users can update their own non-sensitive info if needed (though not implemented in UI yet)
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    (isAdmin() || (isOwner(userId) && request.resource.data.role == 'tecnico'));
+      
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+    }
+
+    // Clients Collection
+    match /clientes/{clienteId} {
+      // Authenticated users can read client info
+      allow read: if isAuthenticated();
+      // Only admins and coordinators can manage clients
+      allow write: if isAdmin() || isCoordinador();
+    }
+
+    // Services Collection
+    match /servicios/{servicioId} {
+      // Technicians can read their own services
+      // Coordinators and Admins can read all services
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.id_tecnico || isAdmin() || isCoordinador());
+      
+      // Technicians can create services assigned to them
+      allow create: if isAuthenticated() && isValidServicio(request.resource.data) && 
+                    (request.resource.data.id_tecnico == request.auth.uid || isAdmin() || isCoordinador());
+      
+      // Technicians can update their own services
+      allow update: if isAuthenticated() && isValidServicio(request.resource.data) && 
+                    (resource.data.id_tecnico == request.auth.uid || isAdmin() || isCoordinador());
+    }
+
+    // Materials Collection
+    match /materiales/{materialId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Zones Collection
+    match /zonas/{zonaId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}
