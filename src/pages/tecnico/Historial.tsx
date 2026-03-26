@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Clock, CheckCircle2, ChevronRight, Calendar, ClipboardList } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, MapPin, CheckCircle2, ChevronRight, Calendar, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { db, auth } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 
 interface ServiceReport {
   id: string;
@@ -14,47 +12,44 @@ interface ServiceReport {
   sincronizado_salesforce: boolean;
 }
 
+const MOCK_REPORTS: ServiceReport[] = [
+  {
+    id: 'SRV-001',
+    id_cliente: 'CLI-101',
+    cliente_nombre: 'Juan Pérez',
+    tipo_servicio: 'Revisión general',
+    fecha: '2026-03-25',
+    estatus: 'completado',
+    sincronizado_salesforce: true
+  },
+  {
+    id: 'SRV-002',
+    id_cliente: 'CLI-102',
+    cliente_nombre: 'María García',
+    tipo_servicio: 'Cambio de medidor',
+    fecha: '2026-03-25',
+    estatus: 'completado',
+    sincronizado_salesforce: true
+  },
+  {
+    id: 'SRV-003',
+    id_cliente: 'CLI-103',
+    cliente_nombre: 'Roberto Sánchez',
+    tipo_servicio: 'Reparación de fuga',
+    fecha: '2026-03-24',
+    estatus: 'completado',
+    sincronizado_salesforce: true
+  }
+];
+
 export default function Historial() {
-  const [reports, setReports] = useState<ServiceReport[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [reports] = useState<ServiceReport[]>(MOCK_REPORTS);
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const q = query(
-      collection(db, 'servicios'),
-      where('id_tecnico', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as ServiceReport[];
-      setReports(reportsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching reports:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const filteredReports = reports.filter(report => 
     report.tipo_servicio.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (report.cliente_nombre?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -91,12 +86,12 @@ export default function Historial() {
                   <span className="text-[10px] font-bold text-primary/40 uppercase">{report.fecha}</span>
                 </div>
                 
-                <h3 className="text-lg font-bold text-primary leading-tight">Servicio #{report.id.slice(-6).toUpperCase()}</h3>
+                <h3 className="text-lg font-bold text-primary leading-tight">Servicio #{report.id}</h3>
                 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-primary/70 text-sm">
                     <MapPin size={16} className="text-accent" />
-                    <span>ID Cliente: {report.id_cliente}</span>
+                    <span>Cliente: {report.cliente_nombre}</span>
                   </div>
                   <div className="flex items-center gap-2 text-primary/70 text-sm">
                     <CheckCircle2 size={16} className={cn(report.sincronizado_salesforce ? "text-green-500" : "text-yellow-500")} />

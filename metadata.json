@@ -2,7 +2,6 @@
   "name": "Gas Uribe - Control de Mantenimiento",
   "description": "Aplicación integral para la gestión de mantenimiento doméstico de Gas Uribe, incluyendo registro de técnicos, coordinación en tiempo real y reportes administrativos.",
   "requestFramePermissions": [
-    "camera",
-    "geolocation"
+    "camera"
   ]
 }

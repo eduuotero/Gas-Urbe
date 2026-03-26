@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Clock, ChevronRight, Play, ClipboardList, Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { db, auth } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, addDoc, getDocs } from 'firebase/firestore';
+import { MapPin, Clock, Play, ClipboardList } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -14,75 +11,51 @@ interface Client {
   estatus: string;
 }
 
+const MOCK_CLIENTS: Client[] = [
+  {
+    id: '1',
+    nombre: 'Juan Pérez',
+    direccion: 'Calle Falsa 123, Col. Centro',
+    hora: '09:00 AM',
+    tipo: 'Revisión general',
+    estatus: 'pendiente'
+  },
+  {
+    id: '2',
+    nombre: 'María García',
+    direccion: 'Av. Insurgentes 456, Col. Roma',
+    hora: '11:30 AM',
+    tipo: 'Cambio de medidor',
+    estatus: 'pendiente'
+  },
+  {
+    id: '3',
+    nombre: 'Roberto Sánchez',
+    direccion: 'Paseo de la Reforma 789, Col. Juárez',
+    hora: '02:00 PM',
+    tipo: 'Reparación de fuga',
+    estatus: 'pendiente'
+  },
+  {
+    id: '4',
+    nombre: 'Ana Martínez',
+    direccion: 'Calle Morelos 101, Col. Condesa',
+    hora: '04:30 PM',
+    tipo: 'Mantenimiento preventivo',
+    estatus: 'pendiente'
+  }
+];
+
 export default function Agenda() {
   const navigate = useNavigate();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const q = query(collection(db, 'clientes'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const clientsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Client[];
-      setClients(clientsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching clients:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const seedData = async () => {
-    const mockClients = [
-      {
-        nombre: 'Juan Pérez',
-        direccion: 'Calle Falsa 123, Col. Centro',
-        hora: '09:00 AM',
-        tipo: 'Revisión general',
-        estatus: 'pendiente',
-        id_contrato_salesforce: 'SF-1001'
-      },
-      {
-        nombre: 'María García',
-        direccion: 'Av. Insurgentes 456, Col. Roma',
-        hora: '11:30 AM',
-        tipo: 'Cambio de medidor',
-        estatus: 'pendiente',
-        id_contrato_salesforce: 'SF-1002'
-      },
-      {
-        nombre: 'Roberto Sánchez',
-        direccion: 'Paseo de la Reforma 789, Col. Juárez',
-        hora: '02:00 PM',
-        tipo: 'Reparación de fuga',
-        estatus: 'pendiente',
-        id_contrato_salesforce: 'SF-1003'
-      }
-    ];
-
-    for (const client of mockClients) {
-      await addDoc(collection(db, 'clientes'), client);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const [clients] = useState<Client[]>(MOCK_CLIENTS);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-primary">Mi Agenda</h2>
-          <p className="text-primary/60 text-sm">Miércoles, 25 de Marzo</p>
+          <p className="text-primary/60 text-sm">Jueves, 26 de Marzo</p>
         </div>
         <div className="bg-accent/10 text-accent px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
           {clients.length} Servicios
@@ -137,14 +110,6 @@ export default function Agenda() {
             <h3 className="font-bold text-primary">No hay servicios hoy</h3>
             <p className="text-sm text-primary/60">¡Buen trabajo! Has terminado tu agenda.</p>
           </div>
-          
-          <button 
-            onClick={seedData}
-            className="btn-accent px-6 py-3 flex items-center gap-2"
-          >
-            <Plus size={20} />
-            Generar Agenda de Prueba
-          </button>
         </div>
       )}
     </div>

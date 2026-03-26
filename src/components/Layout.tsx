@@ -31,6 +31,11 @@ export default function Layout({ children, userRole = 'tecnico' }: LayoutProps) 
 
   const currentMenuItems = menuItems[userRole] || [];
 
+  const handleLogout = () => {
+    // For demo, just reload to go back to login screen
+    window.location.href = '/';
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
@@ -43,7 +48,17 @@ export default function Layout({ children, userRole = 'tecnico' }: LayoutProps) 
             <Menu size={24} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center font-bold text-white">GU</div>
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden p-1">
+              <img 
+                src="https://ais-pre-ym6k5njftqnotxyvg3lwod-348570396532.us-west2.run.app/logo.png" 
+                alt="Logo" 
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = '<span class="font-bold text-primary text-sm">GU</span>';
+                }}
+              />
+            </div>
             <h1 className="font-bold text-lg tracking-tight hidden sm:block">Gas Uribe</h1>
           </div>
         </div>
@@ -64,7 +79,7 @@ export default function Layout({ children, userRole = 'tecnico' }: LayoutProps) 
             ))}
           </div>
           <button 
-            onClick={() => navigate('/login')}
+            onClick={handleLogout}
             className="flex items-center gap-2 text-sm font-medium hover:text-accent transition-colors"
           >
             <LogOut size={18} />
